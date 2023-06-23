@@ -4,7 +4,7 @@
     font-size: larger;
 }
 
-body{
+.outer{
     padding: 0;
     margin: 0;
     display: flex;
