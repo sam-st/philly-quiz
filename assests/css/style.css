@@ -36,6 +36,18 @@
     border: none;
 }
 
+#submit-button{
+    background-color: #2F195F;
+    color: white;
+    border-radius: 5px;
+    padding: 5px 10px;
+    border: none;
+}
+
+#submit-button:hover{
+    background-color: #7353BA;
+}
+
 .button:hover{
     background-color: #7353BA;
 }

@@ -3,8 +3,12 @@ var questionBox = document.getElementById("question-box");
 var questionEl = document.getElementById("question");
 var answersEl = document.getElementById("answers");
 var timeEl = document.querySelector(".time");
+var containerEl = document.querySelector(".container");
+var inputBox = document.getElementById("input");
+var subButton = document.getElementById("submit-button");
 
-var secondsLeft = 60;
+
+var secondsLeft = 30;
 
 
 
@@ -18,62 +22,110 @@ function startGame() {
     getQuestion();
 }
 
+
+var timerInterval;
 function countdown() {
-    var timerInterval = setInterval(function () {
+    timerInterval = setInterval(function () {
         secondsLeft--;
-        timeEl.textContent = "Time remaining: " + secondsLeft;
 
         if (secondsLeft <= 0) {
-            // Stops execution of action at set interval
+            secondsLeft = 0;
+            timeEl.textContent = "Time remaining: " + secondsLeft;
             clearInterval(timerInterval);
-            //TODO: 
+            //end game
+            gameOver();
         }
-
+        else {
+            timeEl.textContent = "Time remaining: " + secondsLeft;
+        }
     }, 1000);
 }
 
 var questionIndex = 0;
 function getQuestion() {
-    questionEl.textContent = questions[questionIndex].question;
-    if (questionIndex >= questions.length) {
-        gameOver();
-    }
-    var answers = questions[questionIndex].answers
+    //had a for loop originally to iterate through the questions but it wasnt waiting for a click
+    if (questionIndex < questions.length) {
+        questionEl.textContent = questions[questionIndex].question;
 
-    //TODO: clear the buttons and iterate the questions array?
-    answersEl.innerHTML = "";
+        var answers = questions[questionIndex].answers
 
-    for (i = 0; i < answers.length; i++) {
-        var answerButton = document.createElement("button");
-        answerButton.classList.add("button");
-        answerButton.textContent = answers[i].ans;
-        answersEl.append(answerButton);
-        (function (choice) {
-            answerButton.addEventListener("click", function () {
-                handleChoice(choice);
-                questionIndex++;
-                getQuestion();
-            });
-        })(answers[i]); //had to look this one up: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures
+        //clear the buttons and iterate the questions array?
+        answersEl.innerHTML = "";
+
+        for (i = 0; i < answers.length; i++) {
+            var answerButton = document.createElement("button");
+            answerButton.classList.add("button");
+            answerButton.textContent = answers[i].ans;
+            answersEl.append(answerButton);
+
+            (function (choice) {
+                answerButton.addEventListener("click", function () {
+                    handleChoice(choice);
+                    questionIndex++;
+                    if (questionIndex >= questions.length) {
+                        gameOver();
+                    }
+                    getQuestion();
+                });
+            })(answers[i]); //had to look this one up: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures
+            
+        }
     }
 }
 
 function handleChoice(choice) {
     //TODO: see if the choice is correct
-    if (choice.correct) {
-        console.log("chose correctly")
-    }
-    else {
+    if (!choice.correct) {
         secondsLeft = secondsLeft - 10;
-        console.log("something else happened");
+    }
+}
+
+function gameOver() {
+    clearInterval(timerInterval);
+    if(secondsLeft < 0){
+        secondsLeft = 0;
     }
 
+    //couldnt figure out how to update the countdown function after the game ended so added this line to update the text content with the actual secondsLeft
+    timeEl.textContent = "Time remaining: " + secondsLeft; //might delete and change the whole screen to a different one.
+
+    //clear screen and make new setup to display the scores
+    questionBox.classList.add("hide");
+    answersEl.classList.add("hide");
+
+    //name of the score should be initials
+    
+    inputBox.classList.remove("hide");
+
+    //make a submit button, store value in a variable, and clear screen on click
+    subButton.classList.remove("hide");
+    
+
+    subButton.addEventListener("click", function(){
+        handleSubmit(inputBox.value);
+    });
+
     
 }
 
-function gameOver(){
+function handleSubmit(initials){
+    // set the score in the local storage
+    localStorage.setItem(initials, secondsLeft);
+    var score = localStorage.getItem(initials);
+
+    inputBox.classList.add("hide");
+    subButton.classList.add("hide");
     
+    sortScores(score);
 }
+
+function sortScores(score){
+    console.log(score);
+    //JSON to turn the key and value into an object?
+    // if its higher than the previous score store it as the highscore
+    // sort the scores accordingly
+}
+
 
 //make an array that stores objects for each question and answer
 var questions = [
@@ -133,9 +185,8 @@ var questions = [
 //create buttons with the answers on them -----------
 //check to see if user answer is correct -----
 //if wrong, subtract time -------
+//when all questions answered, or time runs out time = score ------
 
-
-
-//when all questions answered, or time runs out time = score
 //store score in local storage
 //display highscores
+
