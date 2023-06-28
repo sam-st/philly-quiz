@@ -8,7 +8,8 @@ var inputBox = document.getElementById("input");
 var subButton = document.getElementById("submit-button");
 
 
-var secondsLeft = 30;
+
+var secondsLeft = 60;
 
 
 
@@ -17,13 +18,14 @@ startButton.addEventListener("click", startGame);
 function startGame() {
     startButton.classList.add("hide");
     questionBox.classList.remove("hide");
+    timeEl.classList.remove("hide");
     timeEl.textContent = "Time remaining: " + secondsLeft;
     countdown();
     getQuestion();
 }
 
 
-var timerInterval;
+var timerInterval; //made this global so i could clear the timer when the game ends
 function countdown() {
     timerInterval = setInterval(function () {
         secondsLeft--;
@@ -43,7 +45,7 @@ function countdown() {
 
 var questionIndex = 0;
 function getQuestion() {
-    //had a for loop originally to iterate through the questions but it wasnt waiting for a click
+    //had a 'for' loop originally to iterate through the questions but it wasnt waiting for a click event so it finished the loop before the user clicked the first answer
     if (questionIndex < questions.length) {
         questionEl.textContent = questions[questionIndex].question;
 
@@ -68,13 +70,14 @@ function getQuestion() {
                     getQuestion();
                 });
             })(answers[i]); //had to look this one up: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures
-            
+
         }
     }
 }
 
+//i could put this function inside of my getQuestion function.
 function handleChoice(choice) {
-    //TODO: see if the choice is correct
+    //sees if the choice is correct
     if (!choice.correct) {
         secondsLeft = secondsLeft - 10;
     }
@@ -82,48 +85,79 @@ function handleChoice(choice) {
 
 function gameOver() {
     clearInterval(timerInterval);
-    if(secondsLeft < 0){
+    if (secondsLeft < 0) {
         secondsLeft = 0;
     }
 
     //couldnt figure out how to update the countdown function after the game ended so added this line to update the text content with the actual secondsLeft
-    timeEl.textContent = "Time remaining: " + secondsLeft; //might delete and change the whole screen to a different one.
+    timeEl.textContent = "Time remaining: " + secondsLeft; //might delete and change the whole screen to a different one making this obsolete.
 
     //clear screen and make new setup to display the scores
     questionBox.classList.add("hide");
     answersEl.classList.add("hide");
 
-    //name of the score should be initials
-    
+
     inputBox.classList.remove("hide");
 
     //make a submit button, store value in a variable, and clear screen on click
     subButton.classList.remove("hide");
-    
+    subButton.classList.add("right-span");
 
-    subButton.addEventListener("click", function(){
-        handleSubmit(inputBox.value);
+
+    subButton.addEventListener("click", function () {
+        if (inputBox.value.trim() !== "") {
+            handleSubmit(inputBox.value);
+        }
     });
-
-    
+    timeEl.classList.add("hide");
 }
 
-function handleSubmit(initials){
-    // set the score in the local storage
-    localStorage.setItem(initials, secondsLeft);
-    var score = localStorage.getItem(initials);
-
+function handleSubmit(initials) {
     inputBox.classList.add("hide");
     subButton.classList.add("hide");
-    
-    sortScores(score);
+    //make an array to hold objects containing initials and scores
+    var scores = JSON.parse(localStorage.getItem("scores")) || [];
+
+    scores.push({ "initials": initials, "score": secondsLeft });
+
+    //to sort them i found .sort() function https://www.w3schools.com/js/js_array_sort.asp
+    scores.sort(function (a, b) {
+        return b.score - a.score; //property name is score, i was trying to sort by a.secondsLeft but that wasnt working
+    });
+
+    localStorage.setItem("scores", JSON.stringify(scores));
+    displayScores(scores);
 }
 
-function sortScores(score){
-    console.log(score);
-    //JSON to turn the key and value into an object?
-    // if its higher than the previous score store it as the highscore
-    // sort the scores accordingly
+var scoresEl = document.querySelector(".scores");
+var scoreList = document.querySelector(".score-list");
+var clearButton = document.getElementById("clear");
+function displayScores(scores) {
+    scores = JSON.parse(localStorage.getItem("scores")) || [];
+    scoresEl.classList.remove("hide");
+    clearButton.classList.remove("hide");
+
+    for (var i = 0; i < scores.length; i++) {
+        var listEl = document.createElement("li");
+        var leftSpan = document.createElement("span");
+        var rightSpan = document.createElement("span");
+    
+        leftSpan.classList.add("left-span");
+        rightSpan.classList.add("right-span");
+    
+        leftSpan.textContent = scores[i].initials;
+        rightSpan.textContent = scores[i].score;
+    
+        listEl.appendChild(leftSpan);
+        listEl.appendChild(rightSpan);
+    
+        scoreList.appendChild(listEl);
+    }
+
+    clearButton.addEventListener("click", function () {
+        localStorage.clear();
+        scoreList.innerHTML = "";
+    })
 }
 
 
@@ -179,6 +213,7 @@ var questions = [
         ]
     },
 ]
+
 //start game -----------
 //start a countdown -----------
 //have an array with objects (questions and answers)----------------
@@ -186,7 +221,5 @@ var questions = [
 //check to see if user answer is correct -----
 //if wrong, subtract time -------
 //when all questions answered, or time runs out time = score ------
-
-//store score in local storage
-//display highscores
-
+//store score in local storage---
+//display highscores---
